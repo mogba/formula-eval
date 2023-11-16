@@ -1,7 +1,7 @@
 {
   "name": "formula-eval",
   "version": "1.0.0",
-  "description": "Evaluates and resolves mathematical formulas from strings",
+  "description": "Evaluates and resolves arithmetic expressions",
   "main": "index.ts",
   "type": "module",
   "scripts": {
