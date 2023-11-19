@@ -33,7 +33,7 @@ class NumericLiteral {
   /**
    * Overrides default JS toString to return the
    * numeric literal value parsed as string.
-   * 
+   *
    * --- This is a test.
    * @returns String-parsed value
    */
@@ -175,18 +175,17 @@ function parseExpression(expression: string) {
     const right = stack.pop() as Operand;
     const left = stack.pop() as Operand;
 
-    if (!left) {
-      stack.push(new UnaryOperation(operator, right));
-    } else {
-      stack.push(new BinaryExpression(operator, left, right));
-    }
+    stack.push(new BinaryExpression(operator, left, right));
   };
 
   const applyHigherPriorityOperators = (currentOperator?: string) => {
     const lastOperatorPriority = getOperatorPriority(operators[operators.length - 1] || "");
     const currentOperatorPriority = getOperatorPriority(currentOperator);
 
-    while (!currentOperator ? operators.length > 0 : operators.length > 0 && lastOperatorPriority >= currentOperatorPriority) {
+    while (
+      stack.length >= 2 &&
+      (!currentOperator ? operators.length > 0 : operators.length > 0 && lastOperatorPriority >= currentOperatorPriority)
+    ) {
       applyStack();
     }
   };
@@ -208,14 +207,24 @@ function parseExpression(expression: string) {
     // Popped opening parenthesis at the end of tokensReversed
     // ) 100 / 42 ( * ) 100 + 97 ( - ) 100 / 50 -
 
-    if (token === "(") {
+    if (!token) {
+      applyHigherPriorityOperators();
+
+      return stack[0];
+    } else if (token === "(") {
       const closingParenthesisIndex = tokensReversed.lastIndexOf(")");
       // Closing parenthesis not included in the new expression
-      const parenthesisExpression = tokensReversed.slice(closingParenthesisIndex, tokensReversed.length).reverse().join("");
+      const parenthesisExpression = tokensReversed
+        .slice(closingParenthesisIndex + 1, tokensReversed.length)
+        .reverse()
+        .join("");
       // Resulting expression:
       // 100 / 50 -
 
       let result = parseExpression(parenthesisExpression);
+
+      // I need to check if the token before the expresionn is an unary operator.
+      // If it is, then the expression needs to be added to the stack as an unary operation.
 
       // -3 = -1 (from length to index) -1 (index of opening parenthesis) -1 (preceding index)
       const indexBeforeToken = tokens.length - tokensReversed.length - 3;
@@ -230,21 +239,36 @@ function parseExpression(expression: string) {
       stack.push(result);
 
       // Remove parenthesisExpression and closing parenthesis character
-      tokensReversed = tokensReversed.slice(0, closingParenthesisIndex - 1);
+      tokensReversed = tokensReversed.slice(0, closingParenthesisIndex);
       // ) 100 / 42 ( * ) 100 + 97 ( -
-
-      // Go to the next token
-      return parseToken();
     } else if (isDigit(token)) {
-      // Continue here
+      let operation: UnaryOperation | NumericLiteral = new NumericLiteral(parseFloat(token));
 
-      stack.push(new NumericLiteral(parseFloat(token)));
+      // Check if the token before the digit is a unary operator
+      // -2 = -1 (from length to index) -1 (preceding index)
+      const indexBeforeToken = tokens.length - tokensReversed.length - 2;
+      const firstTokenBeforeDigit = tokens[indexBeforeToken] as string;
+      const secondTokenBeforeDigit = tokens[indexBeforeToken - 1] as string;
+
+      if (isUnaryOperator(firstTokenBeforeDigit) && (!secondTokenBeforeDigit || isArithmeticOperator(secondTokenBeforeDigit))) {
+        operation = new UnaryOperation(firstTokenBeforeDigit, operation);
+
+        // Remove last operator because it was joined with
+        // the digit in the stack as an unary operation
+        operators.pop();
+      }
+
+      // Asume the resulting operation may be part of a binary expression in next iterations
+      // TODO: might change later if the resulting order of operatios doesn't work out
+
+      stack.push(operation);
     } else if (isArithmeticOperator(token)) {
       applyHigherPriorityOperators(token);
       operators.push(token);
     }
 
-    applyHigherPriorityOperators();
+    // Go to the next token
+    return parseToken();
   };
 
   return parseToken();
