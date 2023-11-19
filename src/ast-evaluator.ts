@@ -1,7 +1,5 @@
-import { BinaryExpression, UnaryOperation, NumericLiteral, Operand } from "./expression-to-ast-parser";
-
 // Evaluation function
-function evaluate(ast: BinaryExpression | Operand | undefined): number | undefined {
+function evaluate(ast: Expression | undefined): number | undefined {
   if (!ast) {
     return undefined;
   }
@@ -11,7 +9,7 @@ function evaluate(ast: BinaryExpression | Operand | undefined): number | undefin
     case "+":
     case "*":
     case "/":
-      return evaluateBinaryExpression(ast as BinaryExpression);
+      return evaluateBinaryExpression(ast as BinaryOperation);
     case "-":
       return evaluateUnaryOperation(ast as UnaryOperation);
     default:
@@ -19,7 +17,7 @@ function evaluate(ast: BinaryExpression | Operand | undefined): number | undefin
   }
 }
 
-function evaluateBinaryExpression(ast: BinaryExpression): number | undefined {
+function evaluateBinaryExpression(ast: BinaryOperation): number | undefined {
   const leftValue = evaluate(ast.left);
   const rightValue = evaluate(ast.right);
 
