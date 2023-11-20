@@ -1,3 +1,5 @@
+import { Expression, BinaryOperation, UnaryOperation, NumericLiteral } from "./ast-types";
+
 // Evaluation function
 function evaluate(ast: Expression | undefined): number | undefined {
   if (!ast) {

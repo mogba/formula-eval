@@ -1,7 +1,7 @@
 // Define Abstract Syntax Tree (AST) nodes for different types of expressions
-type Expression = BinaryOperation | UnaryOperation | NumericLiteral;
+export type Expression = BinaryOperation | UnaryOperation | NumericLiteral;
 
-class BinaryOperation {
+export class BinaryOperation {
   operator: string;
   left: Expression | undefined;
   right: Expression | undefined;
@@ -13,7 +13,7 @@ class BinaryOperation {
   }
 }
 
-class UnaryOperation {
+export class UnaryOperation {
   operator: string;
   operand: Expression;
 
@@ -23,7 +23,7 @@ class UnaryOperation {
   }
 }
 
-class NumericLiteral {
+export class NumericLiteral {
   value: number;
 
   constructor(value: number) {

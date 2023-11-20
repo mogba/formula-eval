@@ -1,3 +1,5 @@
+import { Expression, BinaryOperation, UnaryOperation, NumericLiteral } from "./ast-types";
+
 const hasTokens = (tokens: string[] | undefined) => tokens && tokens.length > 0;
 
 const getOperatorPriority = (operator?: string): number => {
