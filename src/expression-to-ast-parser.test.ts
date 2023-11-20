@@ -2,19 +2,19 @@ import { BinaryOperation, NumericLiteral, UnaryOperation } from "./ast-types";
 import { parseExpression } from "./expression-to-ast-parser";
 
 describe("Expression Parser", () => {
-  xtest("should parse basic addition", () => {
+  test("should parse basic addition", () => {
     // Arrange
     const expression = "2 + 3";
     const expected = new BinaryOperation("+", new NumericLiteral(2), new NumericLiteral(3));
 
     // Act
-    const ast = parseExpression(expression);
+    const actual = parseExpression(expression);
 
     // Arrange
-    expect(ast).toEqual(expected);
+    expect(actual).toEqual(expected);
   });
 
-  xtest("should handle parentheses correctly", () => {
+  test("should handle parentheses correctly", () => {
     // Arrange
     const expression = "2 * (3 + 4)";
     const expected = new BinaryOperation(
@@ -24,136 +24,81 @@ describe("Expression Parser", () => {
     );
 
     // Act
-    const ast = parseExpression(expression);
+    const actual = parseExpression(expression);
 
     // Assert
-    expect(ast).toEqual(expected);
+    expect(actual).toEqual(expected);
   });
 
-  xtest("should parse unary operators", () => {
+  test("should parse unary operators", () => {
     // Arrange
     const expression = "-5 * 2";
     const expected = new BinaryOperation("*", new UnaryOperation("-", new NumericLiteral(5)), new NumericLiteral(2));
 
     // Act
-    const ast = parseExpression(expression);
+    const actual = parseExpression(expression);
 
     // Asert
-    expect(ast).toEqual(expected);
+    expect(actual).toEqual(expected);
   });
 
-  xtest("should handle complex expressions", () => {
+  test("should handle higher priority arithmetic operator", () => {
     // Arrange
-    const expression = "2 * (3 - 4) / -2";
-    const expected = new BinaryOperation(
-      "/",
-      new BinaryOperation("*", new NumericLiteral(2), new BinaryOperation("-", new NumericLiteral(3), new NumericLiteral(4))),
-      new UnaryOperation("-", new NumericLiteral(2)),
-    );
-
-    // Act
-    const ast = parseExpression(expression);
-
-    // Assert
-    expect(ast).toEqual(expected);
-  });
-
-  xtest("should handle multiple parenthesis expressions", () => {
-    // Arrange
-    const expression = "(50 / 100) - (97 / 100) * (42 / 100) * 140000";
-    const expected = new BinaryOperation(
-      "*",
-      new BinaryOperation(
-        "*",
-        new BinaryOperation(
-          "-",
-          new BinaryOperation("/", new NumericLiteral(50), new NumericLiteral(100)),
-          new BinaryOperation("/", new NumericLiteral(97), new NumericLiteral(100)),
-        ),
-        new BinaryOperation("/", new NumericLiteral(42), new NumericLiteral(100)),
-      ),
-      new NumericLiteral(140000),
-    );
-
-    // Act
-    const ast = parseExpression(expression);
-
-    // Assert
-    expect(ast).toEqual(expected);
-  });
-
-  xtest("should handle multiple parenthesis expressions 2", () => {
-    // Arrange
-    const expression = "(50 / 100) - ((97 / 100) * (42 / 100)) * 140000";
-
-    const expected = new BinaryOperation(
-      "*",
-      new BinaryOperation(
-        "*",
-        new BinaryOperation(
-          "-",
-          new BinaryOperation("/", new NumericLiteral(50), new NumericLiteral(100)),
-          new BinaryOperation("/", new NumericLiteral(97), new NumericLiteral(100)),
-        ),
-        new BinaryOperation("/", new NumericLiteral(42), new NumericLiteral(100)),
-      ),
-      new NumericLiteral(140000),
-    );
-
-    // Act
-    const ast = parseExpression(expression);
-    const ast2 = parseExpression("(50 / 100) - (97 / 100) * (42 / 100) * 140000");
-    // Assert
-    expect(ast).toEqual(expected);
-  });
-
-  // New tests
-
-  test("should parse simple expression", () => {
     const expression = "50 / 100";
 
     const expected = new BinaryOperation("/", new NumericLiteral(50), new NumericLiteral(100));
 
+    // Act
     const actual = parseExpression(expression);
 
+    // Assert
     expect(actual).toEqual(expected);
   });
 
-  test("should parse simple expression with parenthesis", () => {
+  test("should handle parenthesis", () => {
+    // Arrange
     const expression = "(50 / 100)";
 
     const expected = new BinaryOperation("/", new NumericLiteral(50), new NumericLiteral(100));
 
+    // Act
     const actual = parseExpression(expression);
 
+    // Assert
     expect(actual).toEqual(expected);
   });
 
-  test("should parse simple expression with parenthesis and unary operators", () => {
+  test("should handle expressions within parenthesis", () => {
+    // Arrange
     const expression = "(50 / -100)";
 
     const expected = new BinaryOperation("/", new NumericLiteral(50), new UnaryOperation("-", new NumericLiteral(100)));
 
+    // Act
     const actual = parseExpression(expression);
 
+    // Assert
     expect(actual).toEqual(expected);
   });
 
-  test("should parse simple expression with parenthesis and multiple unary operators", () => {
-    const expression = "(-50 / -100)";
+  test("should handle sub expressions as unary operations", () => {
+    // Arrange
+    const expression = "-(-50 / -100)";
 
-    const expected = new BinaryOperation(
-      "/",
-      new UnaryOperation("-", new NumericLiteral(50)),
-      new UnaryOperation("-", new NumericLiteral(100)),
+    const expected = new UnaryOperation(
+      "-",
+      new BinaryOperation("/", new UnaryOperation("-", new NumericLiteral(50)), new UnaryOperation("-", new NumericLiteral(100))),
     );
 
+    // Act
     const actual = parseExpression(expression);
 
+    // Assert
     expect(actual).toEqual(expected);
   });
 
-  test("should parse multiple operations and parenthesis", () => {
+  test("should hadle multiple operations and parenthesis", () => {
+    // Arrange
     const expression = "+ 30 * (-50 / -100)";
 
     const expected = new BinaryOperation(
@@ -162,33 +107,39 @@ describe("Expression Parser", () => {
       new BinaryOperation("/", new UnaryOperation("-", new NumericLiteral(50)), new UnaryOperation("-", new NumericLiteral(100))),
     );
 
+    // Act
     const actual = parseExpression(expression);
 
+    // Assert
     expect(actual).toEqual(expected);
   });
 
-  test("should handle complex expressions", () => {
-    // Arrange
-    const expression = "(50 / 100) - (97 / 100) * (42 / 100) * 140000";
-
-    const expected = new BinaryOperation(
-      "*",
-      new BinaryOperation(
-        "-",
-        new BinaryOperation("/", new NumericLiteral(50), new NumericLiteral(100)),
+  test.each(["(50 / 100) - (97 / 100) * (42 / 100) * 140000", "((50 / 100) - (97 / 100) * (42 / 100)) * 140000"])(
+    "should correctly prioritize operations",
+    (expression: string) => {
+      // Arrange
+      const expected = new BinaryOperation(
+        "*",
         new BinaryOperation(
-          "*",
-          new BinaryOperation("/", new NumericLiteral(97), new NumericLiteral(100)),
-          new BinaryOperation("/", new NumericLiteral(42), new NumericLiteral(100)),
+          "-",
+          new BinaryOperation("/", new NumericLiteral(50), new NumericLiteral(100)),
+          new BinaryOperation(
+            "*",
+            new BinaryOperation("/", new NumericLiteral(97), new NumericLiteral(100)),
+            new BinaryOperation("/", new NumericLiteral(42), new NumericLiteral(100)),
+          ),
         ),
-      ),
-      new NumericLiteral(140000),
-    );
+        new NumericLiteral(140000),
+      );
 
-    // Act
-    const ast = parseExpression(expression);
+      // Act
+      const actual = parseExpression(expression);
 
-    // Assert
-    expect(ast).toEqual(expected);
-  });
+      console.log("expected", JSON.stringify(expected));
+      console.log("actual", JSON.stringify(actual));
+
+      // Assert
+      expect(actual).toEqual(expected);
+    },
+  );
 });
