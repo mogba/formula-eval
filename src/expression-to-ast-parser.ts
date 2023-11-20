@@ -101,12 +101,18 @@ function parseExpression(expression: string): Expression | undefined {
       // If it is, then the expression needs to be added to the stack as an unary operation.
       // E.g. the root element of this expression would be considered as an unary operation: - ( 3 * 2 )
 
-      // -3 = -1 (parsing from length to index) -1 (index of opening parenthesis) -1 (preceding index)
-      const indexBeforeToken = tokens.length - tokensReversed.length - 3;
+      // -2 = -1 (index of opening parenthesis) -1 (preceding index)
+      const indexBeforeToken = tokens.length - tokensReversed.length - 2;
       const tokenBeforeOpenParenthesis = tokens[indexBeforeToken] as string;
+      const secondTokenBeforeOpenParenthesis = tokens[indexBeforeToken - 1] as string;
 
-      if (isUnaryOperator(tokenBeforeOpenParenthesis)) {
+      if (
+        isUnaryOperator(tokenBeforeOpenParenthesis) &&
+        (!secondTokenBeforeOpenParenthesis || isArithmeticOperator(secondTokenBeforeOpenParenthesis))
+      ) {
         result = new UnaryOperation(tokenBeforeOpenParenthesis, result);
+
+        operators.pop();
       }
 
       stack.push(result);
