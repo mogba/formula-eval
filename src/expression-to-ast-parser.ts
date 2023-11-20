@@ -59,6 +59,24 @@ function parseExpression(expression: string): Expression | undefined {
     }
   };
 
+  const isPreviousTokenForUnaryOperation = (): { result: boolean; unaryOperator?: string } => {
+    // -2 = -1 (from length to index) -1 (preceding index)
+    const previousIndex = tokens.length - tokensReversed.length - 2;
+    const previousToken = tokens[previousIndex] as string;
+    const secondToLastToken = tokens[previousIndex - 1] as string;
+
+    const result = isUnaryOperator(previousToken) && (!secondToLastToken || isArithmeticOperator(secondToLastToken));
+
+    if (result) {
+      return {
+        result,
+        unaryOperator: previousToken,
+      };
+    }
+
+    return { result };
+  };
+
   const parseToken = (): Expression | undefined => {
     // Og formula: - 140000 * (- 50 / 100) - (97 + 100) * (42 / 100)
     // Reversed: ) 100 / 42 ( * ) 100 + 97 ( - ) 100 / 50 - ( * 140000 -
@@ -101,17 +119,13 @@ function parseExpression(expression: string): Expression | undefined {
       // If it is, then the expression needs to be added to the stack as an unary operation.
       // E.g. the root element of this expression would be considered as an unary operation: - ( 3 * 2 )
 
-      // -2 = -1 (index of opening parenthesis) -1 (preceding index)
-      const indexBeforeToken = tokens.length - tokensReversed.length - 2;
-      const tokenBeforeOpenParenthesis = tokens[indexBeforeToken] as string;
-      const secondTokenBeforeOpenParenthesis = tokens[indexBeforeToken - 1] as string;
+      const { result: checkResult, unaryOperator } = isPreviousTokenForUnaryOperation();
 
-      if (
-        isUnaryOperator(tokenBeforeOpenParenthesis) &&
-        (!secondTokenBeforeOpenParenthesis || isArithmeticOperator(secondTokenBeforeOpenParenthesis))
-      ) {
-        result = new UnaryOperation(tokenBeforeOpenParenthesis, result);
+      if (checkResult) {
+        result = new UnaryOperation(unaryOperator as string, result);
 
+        // Remove the last operator because it was joined with
+        // the digit in the stack as an unary operation.
         operators.pop();
       }
 
@@ -124,14 +138,14 @@ function parseExpression(expression: string): Expression | undefined {
     } else if (isDigit(token)) {
       let operation: UnaryOperation | NumericLiteral = new NumericLiteral(parseFloat(token));
 
-      // Check if the token before the digit is a unary operator.
-      // -2 = -1 (from length to index) -1 (preceding index)
-      const indexBeforeToken = tokens.length - tokensReversed.length - 2;
-      const firstTokenBeforeDigit = tokens[indexBeforeToken] as string;
-      const secondTokenBeforeDigit = tokens[indexBeforeToken - 1] as string;
+      // It's necessary to check if the token before the expresionn is an unary operator.
+      // If it is, then the expression needs to be added to the stack as an unary operation.
+      // E.g. the root element of this expression would be considered as an unary operation: - ( 3 * 2 )
 
-      if (isUnaryOperator(firstTokenBeforeDigit) && (!secondTokenBeforeDigit || isArithmeticOperator(secondTokenBeforeDigit))) {
-        operation = new UnaryOperation(firstTokenBeforeDigit, operation);
+      const { result: checkResult, unaryOperator } = isPreviousTokenForUnaryOperation();
+
+      if (checkResult) {
+        operation = new UnaryOperation(unaryOperator as string, operation);
 
         // Remove the last operator because it was joined with
         // the digit in the stack as an unary operation.
